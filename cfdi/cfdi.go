@@ -22,9 +22,16 @@ func GetShortCFDI(data []byte) ShortCFDI {
 	if xmlError != nil {
 		log.Fatal(xmlError)
 	}
-	auxTotal, _ := strconv.ParseFloat(*longData.Total, 64)
-	auxSubtotal, _ := strconv.ParseFloat(*longData.Subtotal, 64)
-	auxImpuestos, _ := strconv.ParseFloat(*longData.CfdiImpuestos.Totalimpuestostrasladados, 64)
+
+	auxTotal, _ := strconv.ParseFloat(FixIfNilString(longData.Total), 64)
+	auxSubtotal, _ := strconv.ParseFloat(FixIfNilString(longData.Subtotal), 64)
+	var auxImpuestos float64
+	if longData.CfdiImpuestos != nil {
+		auxImpuestos, _ = strconv.ParseFloat(FixIfNilString(longData.CfdiImpuestos.Totalimpuestostrasladados), 64)
+	} else {
+		auxImpuestos = 0
+	}
+
 	sCFDI := ShortCFDI{
 		Fecha:       *longData.Fecha,
 		Total:       auxTotal,
@@ -34,6 +41,19 @@ func GetShortCFDI(data []byte) ShortCFDI {
 		Impuestos:   auxImpuestos,
 	}
 	return sCFDI
+}
+func FixIfNilFloat(v *float64) float64 {
+	if v != nil {
+		return *v
+	}
+
+	return 0.0
+}
+func FixIfNilString(v *string) string {
+	if v != nil {
+		return *v
+	}
+	return ""
 }
 
 //ShortCFDI Contains only a few values from CFDI
@@ -54,9 +74,9 @@ func (s ShortCFDI) ToString() string {
 
 //Cfdi struct container
 type Cfdi struct {
-	XMLName            xml.Name                      `xml:"Comprobante"`
-	Fecha              *string                       `xml:"Fecha,attr"`
-	Certificado        *string                       `xml:"Certificado,attr"`
+	XMLName            xml.Name                      `xml:"Comprobante,omitempty"`
+	Fecha              *string                       `xml:"Fecha,attr,omitempty"`
+	Certificado        *string                       `xml:"Certificado,attr,omitempty"`
 	Descuento          *string                       `xml:"Descuento,attr,omitempty"`
 	Folio              *string                       `xml:"Folio,attr,omitempty"`
 	Formapago          *string                       `xml:"Formapago,attr,omitempty"`
@@ -88,9 +108,7 @@ type CfdiReceptor struct {
 	RFC     *string `xml:"Rfc,attr,omitempty"`
 	Usocfdi *string `xml:"UsocCFDI,attr,omitempty"`
 }
-type CfdiImpuestos struct {
-	CfdiTraslados *CfdiTraslados `xml:"cfdi:traslados,omitempty"`
-}
+
 type CfdiComprobanteCfdiImpuestos struct {
 	Totalimpuestostrasladados *string        `xml:"TotalImpuestosTrasladados,attr,omitempty"`
 	CfdiTraslados             *CfdiTraslados `xml:"cfdi:traslados,omitempty"`
@@ -102,21 +120,6 @@ type CfdiComprobante struct {
 	CfdiConceptos   *CfdiConceptos                `xml:"cfdi:conceptos,omitempty"`
 	CfdiImpuestos   *CfdiComprobanteCfdiImpuestos `xml:"cfdi:impuestos,omitempty"`
 	CfdiComplemento *CfdiComplemento              `xml:"cfdi:complemento,omitempty"`
-	CfdiAddenda     *CfdiAddenda                  `xml:"cfdi:addenda,omitempty"`
-}
-
-type CfdiAddenda struct {
-	AmazonaddendaElementosamazon *AmazonaddendaElementosamazon `xml:"amazonaddenda:elementosamazon,omitempty"`
-}
-
-type AmazonaddendaElementosamazon struct {
-	AmazonaddendaLosatributos []AmazonaddendaLosatributo `xml:"amazonaddenda:losatributos"`
-}
-
-type AmazonaddendaLosatributo struct {
-	Identificacionunica *string `xml:"identificacionunica,attr,omitempty"`
-	Nombredelatributo   *string `xml:"nombredelatributo,attr,omitempty"`
-	Valordelatributo    *string `xml:"valordelatributo,attr,omitempty"`
 }
 
 type CfdiComplemento struct {
