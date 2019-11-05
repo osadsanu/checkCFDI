@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/osadsanu/showCFDI/cfdi"
@@ -42,11 +43,24 @@ func main() {
 			}
 			sCFDI := cfdi.GetShortCFDI(byteValue)
 			cfdiList = append(cfdiList, sCFDI)
-			fmt.Println(sCFDI.ToString())
+			//fmt.Println(sCFDI.ToString())
 			tax += sCFDI.Impuestos
 			total += sCFDI.Total
 		}
 	}
+	sort.Slice(cfdiList, func(i, j int) bool {
+		return cfdiList[i].Fecha < cfdiList[j].Fecha
+	})
+	for _, cfdis := range cfdiList {
+		fmt.Println(cfdis.ToString())
+	}
+
+	//args
+	/*
+		for i := 0; i < len(os.Args); i++ {
+			fmt.Println("Arg ", i, " = "+os.Args[i])
+		}
+	*/
 	fmt.Printf("Total:%.2f\n  Tax: %4.2f", total, tax)
 
 }
