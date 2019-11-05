@@ -48,9 +48,23 @@ func main() {
 			total += sCFDI.Total
 		}
 	}
+	//order the list by date, total, and tax as params
 	sort.Slice(cfdiList, func(i, j int) bool {
-		return cfdiList[i].Fecha < cfdiList[j].Fecha
+		if len(os.Args) > 1 {
+			if os.Args[1] == "d" {
+				return cfdiList[i].Fecha < cfdiList[j].Fecha
+			} else if os.Args[1] == "total" {
+				return cfdiList[i].Total < cfdiList[j].Total
+			} else if os.Args[1] == "tax" {
+				return cfdiList[i].Impuestos < cfdiList[j].Impuestos
+			} else {
+				return cfdiList[i].Fecha < cfdiList[j].Fecha
+			}
+		} else {
+			return cfdiList[i].Fecha < cfdiList[j].Fecha
+		}
 	})
+
 	for _, cfdis := range cfdiList {
 		fmt.Println(cfdis.ToString())
 	}
