@@ -11,58 +11,40 @@ import (
 	"github.com/osadsanu/showCFDI/cfdi"
 )
 
+type ArgsFlags struct {
+	OrderByDate     bool
+	OrderByTotal    bool
+	OrderByTax      bool
+	RecursiveSearch bool
+}
+
+var cfdiList []cfdi.ShortCFDI
+var tax float64
+var total float64
+var flags ArgsFlags
+
 func main() {
+	flags = checkArgs(os.Args)
+	fmt.Println(flags)
 
 	folderPath := "."
 	//read Files from img folder
-	files, err := ioutil.ReadDir(folderPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var cfdiList []cfdi.ShortCFDI
-	var tax float64
-	var total float64
+	checkForCFDI(folderPath)
 
-	for _, f := range files {
-		if strings.Contains(f.Name(), ".xml") {
-			//fmt.Println("reading File:", f.Name())
-			xmlFile, err := os.Open(f.Name())
-
-			if err != nil {
-				fmt.Println("Error reading:", f.Name())
-				fmt.Println(err)
-				defer xmlFile.Close()
-				continue
-			}
-			defer xmlFile.Close()
-
-			byteValue, err := ioutil.ReadAll(xmlFile)
-			if err != nil {
-				fmt.Println("cant read: ", f.Name())
-				continue
-			}
-			sCFDI := cfdi.GetShortCFDI(byteValue)
-			cfdiList = append(cfdiList, sCFDI)
-			//fmt.Println(sCFDI.ToString())
-			tax += sCFDI.Impuestos
-			total += sCFDI.Total
-		}
-	}
 	//order the list by date, total, and tax as params
+	//TODO optimize: put the if before the sort function.
 	sort.Slice(cfdiList, func(i, j int) bool {
-		if len(os.Args) > 1 {
-			if os.Args[1] == "d" {
-				return cfdiList[i].Fecha < cfdiList[j].Fecha
-			} else if os.Args[1] == "total" {
-				return cfdiList[i].Total < cfdiList[j].Total
-			} else if os.Args[1] == "tax" {
-				return cfdiList[i].Impuestos < cfdiList[j].Impuestos
-			} else {
-				return cfdiList[i].Fecha < cfdiList[j].Fecha
-			}
-		} else {
+		if flags.OrderByDate {
 			return cfdiList[i].Fecha < cfdiList[j].Fecha
 		}
+		if flags.OrderByTotal {
+			return cfdiList[i].Total < cfdiList[j].Total
+		}
+		if flags.OrderByTax {
+			return cfdiList[i].Impuestos < cfdiList[j].Impuestos
+		}
+		return cfdiList[i].Fecha < cfdiList[j].Fecha
+
 	})
 
 	for _, cfdis := range cfdiList {
@@ -76,5 +58,85 @@ func main() {
 		}
 	*/
 	fmt.Printf("Total:%.2f\n  Tax: %4.2f", total, tax)
+
+}
+func checkArgs(args []string) ArgsFlags {
+	flags := ArgsFlags{
+		OrderByDate:     false,
+		OrderByTotal:    false,
+		OrderByTax:      false,
+		RecursiveSearch: false,
+	}
+	orderFlagsCount := 0
+	for _, flag := range args {
+		if flag == "-r" {
+			flags.RecursiveSearch = true
+		}
+		if flag == "-d" {
+			flags.OrderByDate = true
+			orderFlagsCount++
+		}
+		if flag == "-total" {
+			flags.OrderByTotal = true
+			orderFlagsCount++
+		}
+		if flag == "-tax" {
+			flags.OrderByTax = true
+			orderFlagsCount++
+		}
+	}
+	if orderFlagsCount > 1 {
+		fmt.Println("please only use 1 order flag per use \n-tax \t order by tax\n-d\t order by date\n-total\t order by total\n")
+	}
+
+	return flags
+}
+
+func checkForCFDI(fileName string) {
+	files, err := ioutil.ReadDir(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".xml") { ///TODO: change the if to (the file has to end with .xml not just containt it)
+			//fmt.Println("reading File:", f.Name())
+			xmlFile, err := os.Open(f.Name())
+
+			if err != nil {
+				fmt.Println("Error reading:", f.Name())
+				fmt.Println(err)
+				defer xmlFile.Close()
+				return
+			}
+			defer xmlFile.Close()
+
+			byteValue, err := ioutil.ReadAll(xmlFile)
+			if err != nil {
+				fmt.Println("cant read: ", f.Name())
+				return
+			}
+			sCFDI := cfdi.GetShortCFDI(byteValue)
+			cfdiList = append(cfdiList, sCFDI)
+			//fmt.Println(sCFDI.ToString())
+			tax += sCFDI.Impuestos
+			total += sCFDI.Total
+		}
+		if flags.RecursiveSearch {
+			if f.IsDir() {
+				fmt.Println("is dir! ", f.Name())
+				subFiles, err := ioutil.ReadDir(f.Name())
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, f2 := range subFiles {
+					aux := fmt.Sprintf("%s/%s", f.Name(), f2.Name())
+					fmt.Println(aux)
+					checkForCFDI(aux)
+
+				}
+			}
+		}
+	}
 
 }
