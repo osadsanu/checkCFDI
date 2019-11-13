@@ -99,12 +99,14 @@ func checkForCFDI(fileName string) {
 	}
 
 	for _, f := range files {
+		fullpath := fmt.Sprintf("%s/%s", fileName, f.Name())
+		//fmt.Println(fullpath)
 		if strings.Contains(f.Name(), ".xml") { ///TODO: change the if to (the file has to end with .xml not just containt it)
 			//fmt.Println("reading File:", f.Name())
-			xmlFile, err := os.Open(f.Name())
+			xmlFile, err := os.Open(fullpath)
 
 			if err != nil {
-				fmt.Println("Error reading:", f.Name())
+				fmt.Println("Error reading:", fullpath)
 				fmt.Println(err)
 				defer xmlFile.Close()
 				return
@@ -113,7 +115,7 @@ func checkForCFDI(fileName string) {
 
 			byteValue, err := ioutil.ReadAll(xmlFile)
 			if err != nil {
-				fmt.Println("cant read: ", f.Name())
+				fmt.Println("cant read: ", fullpath)
 				return
 			}
 			sCFDI := cfdi.GetShortCFDI(byteValue)
@@ -124,7 +126,10 @@ func checkForCFDI(fileName string) {
 		}
 		if flags.RecursiveSearch {
 			if f.IsDir() {
-				fmt.Println("is dir! ", f.Name())
+				aux := fmt.Sprintf("%s/%s", fileName, fullpath)
+				fmt.Println("\t recursive path: ", aux)
+				checkForCFDI(aux)
+				/*fmt.Println("is dir! ", f.Name())
 				subFiles, err := ioutil.ReadDir(f.Name())
 				if err != nil {
 					log.Fatal(err)
@@ -134,7 +139,7 @@ func checkForCFDI(fileName string) {
 					fmt.Println(aux)
 					checkForCFDI(aux)
 
-				}
+				}*/
 			}
 		}
 	}
