@@ -126,9 +126,9 @@ func checkForCFDI(fileName string) {
 		}
 		if flags.RecursiveSearch {
 			if f.IsDir() {
-				aux := fmt.Sprintf("%s/%s", fileName, fullpath)
-				fmt.Println("\t recursive path: ", aux)
-				checkForCFDI(aux)
+				//aux := fmt.Sprintf("%s/%s", fileName, fullpath)
+				fmt.Println("\t recursive path: ", fullpath)
+				checkForCFDI(fullpath)
 				/*fmt.Println("is dir! ", f.Name())
 				subFiles, err := ioutil.ReadDir(f.Name())
 				if err != nil {
