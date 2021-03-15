@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/osadsanu/showCFDI/cfdi"
+	"github.com/osadsanu/checkCFDI/cfdi"
 )
 
 type ArgsFlags struct {
